@@ -34,22 +34,26 @@ class CustomerDetailSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     ingredients = IngredientSerializer()
     customer = CustomerDetailSerializer()
+
     class Meta:
         model = Order
         fields = '__all__'
-        
 
-def create(self, validate_data):
-    ingredient = validate_data['ingredients']
-    customer = validate_data['customer']
-    price = validate_data['price']
-    orderTime = validate_data['orderTime']
-    user = validate_data['user']
-    order = Order.objects.update_or_create(
-        ingredients = IngredientSerializer.create(IngredientSerializer(), ingredient),
-        customer = CustomerDetailSerializer.create(CustomerDetailSerializer, customer),
-        orderTime = orderTime,
-        price = price,
-        user = user
-    )
-    return order 
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        customer_data = validated_data.pop('customer')
+
+        # Create ingredients instance
+        ingredients_instance = Ingredient.objects.create(**ingredients_data)
+
+        # Create customer detail instance
+        customer_instance = CustomerDetail.objects.create(**customer_data)
+
+        # Create order instance
+        order = Order.objects.create(
+            ingredients=ingredients_instance,
+            customer=customer_instance,
+            **validated_data
+        )
+        return order
+
